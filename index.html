@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Cricket Scores</title>
+    <style>
+        /* Global box-sizing for predictable layout */
+        * {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #00a859;
+            --secondary-color: #007bff;
+            --dark-overlay: rgba(0, 0, 0, 0.7);
+            --card-background: rgba(0, 0, 0, 0.6); /* Changed to semi-transparent black */
+            --text-color: #ffffff;
+            --live-color: #e41a1c;
+            --finished-color: #4daf4a;
+            --upcoming-color: #377eb8;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: var(--text-color);
+            background-image: url('https://images.unsplash.com/photo-1540742111107-16067759d57a?q=80&w=1935&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'); /* Updated background image to a cricket field */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            position: relative; /* Added to establish positioning context for ::before */
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%; /* Changed from right: 0 */
+            height: 100%; /* Changed from bottom: 0 */
+            background: var(--dark-overlay);
+            z-index: -1;
+        }
+        
+        .container {
+            max-width: 1200px; /* Increased from 900px to allow more space for cards */
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2.5em;
+            color: var(--primary-color); /* Changed title color */
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+        }
+
+        #search-bar {
+            padding: 10px 15px;
+            border-radius: 20px;
+            border: 2px solid var(--primary-color);
+            background: var(--card-background);
+            color: var(--text-color);
+            font-size: 1em;
+            backdrop-filter: blur(5px);
+        }
+        
+        #search-bar::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+
+        #refresh-btn {
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: none;
+            background: var(--primary-color);
+            color: var(--text-color);
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        #refresh-btn:hover {
+            background-color: #008f4b;
+        }
+
+        #scores-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Adjusted min-width for better responsiveness */
+            gap: 20px;
+        }
+
+        .score-card {
+            background: var(--card-background);
+            border: 1px solid rgba(255, 255, 255, 0.3); /* Strengthened border */
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: transform 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .score-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .status-badge {
+            position: absolute;
+            top: 15px;
+            right: -30px;
+            transform: rotate(45deg);
+            padding: 5px 30px;
+            font-size: 0.8em;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+        }
+
+        .status-badge.LIVE { background-color: var(--live-color); }
+        .status-badge.FINISHED { background-color: var(--finished-color); }
+        .status-badge.UPCOMING { background-color: var(--upcoming-color); }
+
+        .score-title a {
+            text-decoration: none;
+            color: var(--text-color);
+            font-size: 1.3em;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 10px;
+            word-break: break-word; /* Added for long titles */
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7); /* Added text shadow for readability */
+        }
+
+        .score-title a:hover {
+            color: var(--primary-color);
+        }
+
+        .score-description {
+            font-size: 1em;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 20px; /* Added margin for spacing */
+            word-break: break-word; /* Added for long descriptions */
+            text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5); /* Added text shadow for readability */
+        }
+        
+        .details-btn {
+            display: inline-block;
+            padding: 8px 15px;
+            border-radius: 15px;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            text-decoration: none;
+            text-align: center;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .details-btn:hover {
+            background-color: #0056b3;
+        }
+
+        #no-matches {
+            text-align: center;
+            font-size: 1.2em;
+            padding: 40px;
+            grid-column: 1 / -1;
+            background: var(--card-background);
+            border-radius: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Live Cricket Scores</h1>
+            <div class="controls">
+                <input type="text" id="search-bar" placeholder="Search by team...">
+                <button id="refresh-btn">Refresh</button>
+            </div>
+        </header>
+        <main id="scores-container">
+            <!-- Scores will be injected here by JavaScript -->
+        </main>
+    </div>
+
+    <script>
+        const scoresContainer = document.getElementById('scores-container');
+        const searchBar = document.getElementById('search-bar');
+        const refreshBtn = document.getElementById('refresh-btn');
+        let refreshInterval;
+
+        const renderScores = (scores) => {
+            scoresContainer.innerHTML = '';
+            if (scores.length === 0) {
+                scoresContainer.innerHTML = '<p id="no-matches">No matches found.</p>';
+                return;
+            }
+
+            scores.forEach(score => {
+                const card = document.createElement('div');
+                card.className = 'score-card';
+
+                card.innerHTML = `
+                    <div class="status-badge ${score.status}">${score.status}</div>
+                    <div class="score-title">
+                        <a href="${score.link}" target="_blank">${score.title}</a>
+                    </div>
+                    <p class="score-description">${score.description}</p>
+                    <a href="${score.link}" target="_blank" class="details-btn">View Full Status</a>
+                `;
+                scoresContainer.appendChild(card);
+            });
+        };
+
+        const fetchAndRenderScores = async (query = '') => {
+            try {
+                const response = await fetch(`/api/scores?q=${encodeURIComponent(query)}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const scores = await response.json();
+                renderScores(scores);
+            } catch (error) {
+                console.error("Failed to fetch scores:", error);
+                scoresContainer.innerHTML = '<p id="no-matches">Failed to load scores. Please try again later.</p>';
+            }
+        };
+
+        const startAutoRefresh = (interval = 45000) => {
+            if (refreshInterval) clearInterval(refreshInterval);
+            refreshInterval = setInterval(() => fetchAndRenderScores(searchBar.value), interval);
+        };
+        
+        searchBar.addEventListener('input', () => {
+            fetchAndRenderScores(searchBar.value);
+        });
+
+        refreshBtn.addEventListener('click', () => {
+            fetchAndRenderScores(searchBar.value);
+        });
+
+        // Initial load and start auto-refresh
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAndRenderScores();
+            startAutoRefresh();
+        });
+    </script>
+</body>
+</html>
